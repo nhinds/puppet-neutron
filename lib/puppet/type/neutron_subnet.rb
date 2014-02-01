@@ -23,11 +23,8 @@ Puppet::Type.newtype(:neutron_subnet) do
     newvalues('4', '6')
   end
 
-  newproperty(:allocation_pools) do
+  newproperty(:allocation_pools, :array_matching => :all) do
     desc 'Sub-ranges of cidr available for dynamic allocation to ports'
-    validate do |v|
-      raise(Puppet::Error, 'This is a read only property')
-    end
   end
 
   newproperty(:gateway_ip) do
