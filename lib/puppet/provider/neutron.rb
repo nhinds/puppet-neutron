@@ -73,12 +73,12 @@ correctly configured.")
         neutron(args)
       end
     rescue Exception => e
-      if (e.message =~ /\[Errno 111\] Connection refused/) or
-          (e.message =~ /\(HTTP 400\)/)
+      if (retries = (retries || 6) - 1) > 0 and
+          ((e.message =~ /\[Errno 111\] Connection refused/) or
+          (e.message =~ /\(HTTP 400\)/) or
+          (e.message =~ /Connection to neutron failed/))
         sleep 10
-        withenv authenv do
-          neutron(args)
-        end
+        retry
       else
        raise(e)
       end
