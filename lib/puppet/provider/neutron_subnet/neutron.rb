@@ -29,7 +29,7 @@ Puppet::Type.type(:neutron_subnet).provide(
         :cidr                      => attrs['cidr'],
         :ip_version                => attrs['ip_version'],
         :gateway_ip                => attrs['gateway_ip'],
-        :allocation_pools          => attrs['allocation_pools'],
+        :allocation_pools          => _parse_allocation_pools(attrs['allocation_pools']),
         :host_routes               => attrs['host_routes'],
         :dns_nameservers           => attrs['dns_nameservers'],
         :enable_dhcp               => attrs['enable_dhcp'],
@@ -50,6 +50,11 @@ Puppet::Type.type(:neutron_subnet).provide(
 
   def exists?
     @property_hash[:ensure] == :present
+  end
+
+  # Takes '{"start": "IP", "end": "IP2"}' and turns it into ["IP", "IP2"]
+  def self._parse_allocation_pools(val)
+    val.scan(/:\s*"([^"]*)"/).flatten
   end
 
   def create
@@ -75,6 +80,10 @@ Puppet::Type.type(:neutron_subnet).provide(
       opts << "--tenant_id=#{@resource[:tenant_id]}"
     end
 
+    if @resource[:allocation_pools]
+      opts << "--allocation-pool=start=#{@resource[:allocation_pools][0]},end=#{@resource[:allocation_pools][1]}"
+    end
+
     if @resource[:network_name]
       opts << resource[:network_name]
     elsif @resource[:network_id]
@@ -93,7 +102,7 @@ Puppet::Type.type(:neutron_subnet).provide(
         :cidr                      => attrs['cidr'],
         :ip_version                => attrs['ip_version'],
         :gateway_ip                => attrs['gateway_ip'],
-        :allocation_pools          => attrs['allocation_pools'],
+        :allocation_pools          => self.class._parse_allocation_pools(attrs['allocation_pools']),
         :host_routes               => attrs['host_routes'],
         :dns_nameservers           => attrs['dns_nameservers'],
         :enable_dhcp               => attrs['enable_dhcp'],
@@ -120,6 +129,7 @@ Puppet::Type.type(:neutron_subnet).provide(
 
   [
    :cidr,
+   :allocation_pools,
    :ip_version,
    :network_id,
    :tenant_id,
