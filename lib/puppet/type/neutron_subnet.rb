@@ -49,11 +49,8 @@ Puppet::Type.newtype(:neutron_subnet) do
     end
   end
 
-  newproperty(:dns_nameservers) do
+  newproperty(:dns_nameservers, :array_matching => :all) do
     desc 'DNS name servers used by hosts in this subnet.'
-    validate do |v|
-      raise(Puppet::Error, 'This is a read only property')
-    end
   end
 
   newproperty(:network_id) do

@@ -31,7 +31,7 @@ Puppet::Type.type(:neutron_subnet).provide(
         :gateway_ip                => attrs['gateway_ip'],
         :allocation_pools          => _parse_allocation_pools(attrs['allocation_pools']),
         :host_routes               => attrs['host_routes'],
-        :dns_nameservers           => attrs['dns_nameservers'],
+        :dns_nameservers           => [attrs['dns_nameservers']].flatten,
         :enable_dhcp               => attrs['enable_dhcp'],
         :network_id                => attrs['network_id'],
         :tenant_id                 => attrs['tenant_id']
@@ -84,6 +84,12 @@ Puppet::Type.type(:neutron_subnet).provide(
       opts << "--allocation-pool=start=#{@resource[:allocation_pools][0]},end=#{@resource[:allocation_pools][1]}"
     end
 
+    if @resource[:dns_nameservers]
+      @resource[:dns_nameservers].each do |dns_nameserver|
+        opts << "--dns-nameserver=#{dns_nameserver}"
+      end
+    end
+
     if @resource[:network_name]
       opts << resource[:network_name]
     elsif @resource[:network_id]
@@ -104,7 +110,7 @@ Puppet::Type.type(:neutron_subnet).provide(
         :gateway_ip                => attrs['gateway_ip'],
         :allocation_pools          => self.class._parse_allocation_pools(attrs['allocation_pools']),
         :host_routes               => attrs['host_routes'],
-        :dns_nameservers           => attrs['dns_nameservers'],
+        :dns_nameservers           => [attrs['dns_nameservers']].flatten,
         :enable_dhcp               => attrs['enable_dhcp'],
         :network_id                => attrs['network_id'],
         :tenant_id                 => attrs['tenant_id'],
@@ -125,6 +131,17 @@ Puppet::Type.type(:neutron_subnet).provide(
 
   def enable_dhcp=(value)
     auth_neutron('subnet-update', "--enable-dhcp=#{value}", name)
+  end
+
+  def dns_nameservers=(value)
+    args = ['subnet-update', name, '--dns-nameservers']
+    if value.nil? or value.empty?
+      args << 'action=clear'
+    else
+      args << 'list=true'
+      args += value
+    end
+    auth_neutron(*args)
   end
 
   [
