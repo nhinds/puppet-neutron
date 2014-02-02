@@ -60,14 +60,18 @@ correctly configured.")
     @neutron_conf
   end
 
-  def self.auth_neutron(*args)
+  def self.get_authenv
     q = neutron_credentials
-    authenv = {
+    {
       :OS_AUTH_URL    => self.auth_endpoint,
       :OS_USERNAME    => q['admin_user'],
       :OS_TENANT_NAME => q['admin_tenant_name'],
       :OS_PASSWORD    => q['admin_password']
     }
+  end
+
+  def self.auth_neutron(*args)
+    authenv = get_authenv
     begin
       withenv authenv do
         neutron(args)
